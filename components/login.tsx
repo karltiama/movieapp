@@ -21,6 +21,7 @@ export default function LoginForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [name, setName] = useState(""); // New state for name
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isLogin, setIsLogin] = useState(true);
@@ -47,8 +48,19 @@ export default function LoginForm() {
 				}
 
 				// Handle sign up
-				const { error } = await supabase.auth.signUp({ email, password });
+				const { data, error } = await supabase.auth.signUp({
+					email,
+					password,
+				});
 				if (error) throw error;
+
+				// After sign-up, insert the user's name into the profiles table
+				const { error: profileError } = await supabase
+					.from("profiles")
+					.insert([{ user_id: data.user?.id, name }]);
+
+				if (profileError) throw profileError;
+
 				// Redirect to the dashboard after successful sign-up
 				router.push("/dashboard");
 			}
@@ -111,6 +123,17 @@ export default function LoginForm() {
 						<form onSubmit={handleSubmit}>
 							<CardContent className="space-y-4">
 								{error && <p className="text-red-500">{error}</p>}
+								<div className="space-y-2">
+									<Label htmlFor="name">Name</Label>
+									<Input
+										id="name"
+										type="text"
+										placeholder="John Doe"
+										value={name}
+										onChange={(e) => setName(e.target.value)}
+										required
+									/>
+								</div>
 								<div className="space-y-2">
 									<Label htmlFor="email">Email</Label>
 									<Input
