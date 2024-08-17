@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient"; // Import Supabase client
 
 function Dashboard() {
 	const user = useAuth(); // Access user data from context if using AuthProvider
@@ -22,7 +23,7 @@ function Dashboard() {
 		{ title: string; rating: number; description: string }[]
 	>([]);
 
-	const handleSearch = (e) => {
+	const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const query = e.target.value.toLowerCase();
 
 		// If the query is empty, clear the search results
@@ -58,6 +59,15 @@ function Dashboard() {
 		);
 
 		setSearchResults(results);
+	};
+
+	const handleSignOut = async () => {
+		const { error } = await supabase.auth.signOut();
+		if (error) {
+			console.error("Error signing out:", error.message);
+		} else {
+			window.location.href = "/"; // Redirect to the login page
+		}
 	};
 
 	return (
@@ -131,14 +141,9 @@ function Dashboard() {
 							</Link>
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem>
-							<Link
-								href="#"
-								className="flex items-center gap-2"
-								prefetch={false}>
-								<LogOut className="w-4 h-4" />
-								<span>Sign Out</span>
-							</Link>
+						<DropdownMenuItem onClick={handleSignOut}>
+							<LogOut className="w-4 h-4" />
+							<span>Sign Out</span>
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
