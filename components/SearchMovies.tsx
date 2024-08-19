@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 interface SearchMoviesProps {
 	onResultSelect?: (movie: any) => void; // Optional callback for selecting a movie
@@ -47,6 +48,12 @@ const SearchMovies: React.FC<SearchMoviesProps> = ({ onResultSelect }) => {
 		}
 	};
 
+	const handleMovieClick = () => {
+		// Reset the search state
+		setQuery("");
+		setSearchResults([]);
+	};
+
 	return (
 		<div className="relative">
 			<Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -67,31 +74,34 @@ const SearchMovies: React.FC<SearchMoviesProps> = ({ onResultSelect }) => {
 				<div className="absolute top-full left-0 w-full mt-2 bg-background border rounded-lg shadow-lg z-10">
 					<div className="p-4 grid gap-4">
 						{searchResults.map((movie) => (
-							<div
+							<Link
+								href={`/movies/${movie.id}`}
 								key={movie.id}
-								className="flex items-center gap-4 cursor-pointer"
-								onClick={() => onResultSelect && onResultSelect(movie)}>
-								<img
-									src={
-										movie.poster_path
-											? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-											: "/placeholder.svg"
-									}
-									alt={movie.title}
-									width={80}
-									height={120}
-									className="rounded-lg"
-									style={{ aspectRatio: "80/120", objectFit: "cover" }}
-								/>
-								<div>
-									<div className="font-medium">{movie.title}</div>
-									<div className="flex items-center gap-2 text-sm text-muted-foreground">
-										<Star className="w-4 h-4 fill-primary" />
-										{movie.vote_average}
+								onClick={handleMovieClick} // Reset search state on click
+							>
+								<div className="flex items-center gap-4 cursor-pointer">
+									<img
+										src={
+											movie.poster_path
+												? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+												: "/placeholder.svg"
+										}
+										alt={movie.title}
+										width={80}
+										height={120}
+										className="rounded-lg"
+										style={{ aspectRatio: "80/120", objectFit: "cover" }}
+									/>
+									<div>
+										<div className="font-medium">{movie.title}</div>
+										<div className="flex items-center gap-2 text-sm text-muted-foreground">
+											<Star className="w-4 h-4 fill-primary" />
+											{movie.vote_average}
+										</div>
+										<p className="text-sm line-clamp-2">{movie.overview}</p>
 									</div>
-									<p className="text-sm line-clamp-2">{movie.overview}</p>
 								</div>
-							</div>
+							</Link>
 						))}
 					</div>
 				</div>

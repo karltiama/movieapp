@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import SearchMovies from "@/components/SearchMovies";
+import SearchMovies from "@/components/SearchMovies"; // Import the SearchMovies component
 
 const Header = () => {
 	const user = useAuth();
@@ -30,7 +30,7 @@ const Header = () => {
 	return (
 		<header className="sticky top-0 z-30 flex items-center h-16 px-4 border-b bg-background sm:px-6">
 			<div className="flex-1 relative">
-				<SearchMovies />
+				<SearchMovies /> {/* Include the search component */}
 			</div>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
