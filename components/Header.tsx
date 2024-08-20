@@ -43,7 +43,10 @@ const Header = () => {
 					<DropdownMenuLabel>User Menu</DropdownMenuLabel>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem>
-						<Link href="#" className="flex items-center gap-2" prefetch={false}>
+						<Link
+							href="/dashboard" // Update this line to redirect to the dashboard
+							className="flex items-center gap-2"
+							prefetch={false}>
 							<UserRound className="w-4 h-4" />
 							<span>Profile</span>
 						</Link>

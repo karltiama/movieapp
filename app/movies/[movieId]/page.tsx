@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Heart, Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient"; // Import Supabase client
 
 interface Movie {
 	id: number;
@@ -21,6 +23,8 @@ const MovieDetailPage = ({ params }: { params: { movieId: string } }) => {
 	const { movieId } = params;
 	const [movie, setMovie] = useState<Movie | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [adding, setAdding] = useState(false); // State for adding to watchlist
+	const [isInWatchlist, setIsInWatchlist] = useState(false); // State for checking if already in watchlist
 
 	useEffect(() => {
 		const fetchMovieDetails = async () => {
@@ -52,6 +56,25 @@ const MovieDetailPage = ({ params }: { params: { movieId: string } }) => {
 					runtime: data.runtime,
 					release_date: data.release_date,
 				});
+
+				// Check if the movie is already in the watchlist
+				const {
+					data: { session },
+				} = await supabase.auth.getSession();
+
+				if (session) {
+					const userId = session.user.id;
+					const { data: existingEntry } = await supabase
+						.from("user_movie_list")
+						.select("*")
+						.eq("user_id", userId)
+						.eq("movie_id", movieId)
+						.single();
+
+					if (existingEntry) {
+						setIsInWatchlist(true);
+					}
+				}
 			} catch (error) {
 				console.error("Failed to fetch movie details:", error);
 			} finally {
@@ -61,6 +84,47 @@ const MovieDetailPage = ({ params }: { params: { movieId: string } }) => {
 
 		fetchMovieDetails();
 	}, [movieId]);
+
+	const handleAddToWatchlist = async () => {
+		if (!movie) return;
+		setAdding(true);
+
+		try {
+			// Get the current user's session
+			const {
+				data: { session },
+				error: sessionError,
+			} = await supabase.auth.getSession();
+
+			if (sessionError || !session) {
+				console.error("Not authenticated", sessionError);
+				return;
+			}
+
+			const userId = session.user.id;
+
+			// Insert the movie into the user's watchlist
+			const { error } = await supabase.from("user_movie_list").insert({
+				user_id: userId,
+				movie_id: movie.id,
+				movie_title: movie.title, // Store the movie title
+				poster_path: movie.poster_path, // Store the poster path
+				vote_average: movie.vote_average, // Store the vote average
+				status: "want-to-watch", // You can customize this status
+			});
+
+			if (error) {
+				console.error("Error adding movie to watchlist:", error.message);
+			} else {
+				alert(`${movie.title} has been added to your watchlist!`);
+				setIsInWatchlist(true); // Mark as added to the watchlist
+			}
+		} catch (error) {
+			console.error("Failed to add movie to watchlist:", error);
+		} finally {
+			setAdding(false);
+		}
+	};
 
 	if (loading) {
 		return <p>Loading movie details...</p>;
@@ -98,13 +162,15 @@ const MovieDetailPage = ({ params }: { params: { movieId: string } }) => {
 					<div className="grid gap-4">
 						<h2 className="text-2xl font-bold">{movie.title}</h2>
 						<div className="flex items-center gap-2">
-							<Button variant="ghost" size="icon">
-								<HeartIcon className="w-5 h-5 fill-primary" />
-								<span className="sr-only">Like</span>
-							</Button>
-							<Button variant="ghost" size="icon">
-								<StarIcon className="w-5 h-5 fill-primary" />
-								<span className="sr-only">Add to Favorites</span>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={handleAddToWatchlist}
+								disabled={adding || isInWatchlist}>
+								<Star
+									className={`w-5 h-5 ${isInWatchlist ? "fill-primary" : ""}`}
+								/>
+								<span className="sr-only">Add to Watchlist</span>
 							</Button>
 						</div>
 						<div className="grid gap-2 text-sm">
@@ -132,41 +198,5 @@ const MovieDetailPage = ({ params }: { params: { movieId: string } }) => {
 		</Card>
 	);
 };
-
-function HeartIcon(props: React.SVGProps<SVGSVGElement>) {
-	return (
-		<svg
-			{...props}
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round">
-			<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-		</svg>
-	);
-}
-
-function StarIcon(props: React.SVGProps<SVGSVGElement>) {
-	return (
-		<svg
-			{...props}
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round">
-			<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-		</svg>
-	);
-}
 
 export default MovieDetailPage;
